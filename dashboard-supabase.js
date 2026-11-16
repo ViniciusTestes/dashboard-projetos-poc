@@ -69,7 +69,7 @@ function mapProject(source,edit) {
 }
 (function(){
   const $=id=>document.getElementById(id), config=window.SUPABASE_CONFIG||{};
-  let client,repo,channel,pollTimer,refreshTimer,authenticated=false;
+  let client,repo,channel,pollTimer,refreshTimer,authenticated=false,authAccess;
   let busy=false,dirty=false,opening=false,conflict=false,remotePending=false,imageLoading=false,backgroundLoading=false;
   let sessionEpoch=0,formEpoch=0,stateRevision=0;
   const msg=t=>$('m365Msg').textContent=t;
@@ -207,9 +207,11 @@ function mapProject(source,edit) {
         else clear();
       }
     });
+    authAccess = window.DashboardAuthAccess?.(client);
   }
   async function connect(ev){
     ev?.preventDefault();if(busy)return;if(authenticated){await load();return;}
+    if(authAccess){await authAccess.ready;if(!authAccess.allowsLogin){authAccess.focus();return;}}
     const ok=await run(async()=>{
       initializeConnection();
       const {error}=await client.auth.signInWithPassword({email:$('authEmail').value.trim(),password:$('authPassword').value});
